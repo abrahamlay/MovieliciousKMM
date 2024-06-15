@@ -18,8 +18,8 @@ object BaseNetworkImpl {
     }
 
     fun getPath(url: String) : String {
-        val mockking = "https://demo0148911.mockable.io/"
-        return "$mockking$url"
+        val baseUrl = "https://api.themoviedb.org/"
+        return "$baseUrl$url"
     }
 
     @Throws(Exception::class)
