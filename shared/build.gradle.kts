@@ -26,8 +26,6 @@ kotlin {
         }
     }
 
-    val coroutinesVersion = "1.7.1"
-    val ktorVersion = "2.3.11"
 
     sourceSets {
         val commonMain by getting {
