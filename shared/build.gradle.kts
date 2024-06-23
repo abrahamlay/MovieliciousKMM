@@ -1,3 +1,4 @@
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -5,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     kotlin("plugin.serialization") version ("1.8.0")
+    kotlin("kapt") version "2.0.0"
+    id("com.google.dagger.hilt.android") version "2.47" apply false
 }
 
 kotlin {
@@ -51,6 +54,11 @@ kotlin {
                 dependsOn(commonMain)
                 implementation(libs.ktor.client.android)
                 implementation(libs.ktor.client.okhttp)
+                implementation(libs.hilt.android)
+                configurations["kapt"].dependencies.add(
+                    DefaultExternalModuleDependency(
+                        "com.google.dagger", "hilt-android-compiler", "2.47")
+                )
             }
         }
 
@@ -76,6 +84,8 @@ kotlin {
         iosSimulatorArm64Test.dependsOn(iosTest)
 
     }
+
+    task("testClasses")
 }
 
 android {

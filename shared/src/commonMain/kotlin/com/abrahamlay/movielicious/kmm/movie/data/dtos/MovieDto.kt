@@ -1,29 +1,13 @@
 package com.abrahamlay.movielicious.kmm.movie.data.dtos
 
+import com.abrahamlay.movielicious.kmm.core.datainfra.remote.BaseCollectionResponse
 import com.abrahamlay.movielicious.kmm.movie.domain.model.Movie
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 
 @Serializable
-data class MovieDto(
-    @SerialName("page")
-    var page: Int = 0,
-
-    @SerialName("total_results")
-    val totalResults: Int = 0,
-
-    @SerialName("total_pages")
-    var totalPages: Int = 0,
-
-    @SerialName("results")
-    var results: List<Movie>
-) {
-
+class MovieDto :BaseCollectionResponse<MovieDto.Movie>() {
     @Serializable
     class Movie(
         @SerialName("vote_count")
@@ -71,8 +55,8 @@ data class MovieDto(
 }
 
 
-fun MovieDto.toData(): List<Movie> {
-    return this.results.map { movie ->
+fun List<MovieDto.Movie>.toData(): List<Movie> {
+    return this.map { movie ->
         Movie(
             movie.voteCount,
             movie.id,

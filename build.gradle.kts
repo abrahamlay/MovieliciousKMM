@@ -6,4 +6,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    kotlin("kapt") version "2.0.0" apply false
+    id("com.google.dagger.hilt.android") version "2.47" apply false
+    kotlin("plugin.serialization") version ("1.8.0")
 }

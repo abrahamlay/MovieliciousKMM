@@ -1,3 +1,4 @@
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -7,6 +8,13 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    kotlin("kapt") version "2.0.0"
+    id("com.google.dagger.hilt.android") version "2.47" apply false
+    kotlin("plugin.serialization") version ("1.8.0")
+}
+// Allow references to generated code
+kapt {
+    correctErrorTypes = true
 }
 
 kotlin {
@@ -22,6 +30,10 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.hilt.android)
+            configurations["kapt"].dependencies.add(DefaultExternalModuleDependency(
+                "com.google.dagger", "hilt-android-compiler", "2.47"))
+            implementation(libs.androidx.activity.ktx)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,6 +61,11 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+//        javaCompileOptions {
+//            annotationProcessorOptions {
+//                arguments["room.schemaLocation"] = "$projectDir/schemas".toString()
+//            }
+//        }
     }
     packaging {
         resources {

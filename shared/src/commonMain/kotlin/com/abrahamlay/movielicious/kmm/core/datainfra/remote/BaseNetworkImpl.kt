@@ -32,6 +32,23 @@ object BaseNetworkImpl {
     }
 
     @Throws(Exception::class)
+    fun <DATA> validateCollectionResponse(baseResponse: BaseCollectionResponse<DATA>): List<DATA> {
+        validateResponse(baseResponse as BaseEmptyCollectionBodyResponse)
+        return baseResponse.results ?: throw CustomApiException(
+            baseResponse.status,
+            baseResponse.message.orEmpty()
+        )
+    }
+
+    @Throws(Exception::class)
+    fun validateResponse(baseResponse: BaseEmptyCollectionBodyResponse) {
+        if (baseResponse.status != "00") throw CustomApiException(
+            baseResponse.status,
+            baseResponse.message.orEmpty()
+        )
+    }
+
+    @Throws(Exception::class)
     fun validateResponse(baseResponse: BaseEmptyBodyResponse) {
         if (baseResponse.status != "00") throw CustomApiException(
             baseResponse.status,

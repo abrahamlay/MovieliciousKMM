@@ -9,7 +9,21 @@ open class BaseEmptyBodyResponse (
     @SerialName("status") open var status : String? = null
 )
 
+
 @Serializable
 open class BaseResponse<T>(
     @SerialName("data") open var data: T? = null
 ) : BaseEmptyBodyResponse()
+
+
+@Serializable
+open class BaseEmptyCollectionBodyResponse(
+    @SerialName("page") open var page: Int = 0,
+    @SerialName("total_results") open val totalResults: Int = 0,
+    @SerialName("total_pages") open var totalPages: Int = 0,
+) : BaseEmptyBodyResponse()
+@Serializable
+abstract class BaseCollectionResponse<DATA>(
+    @SerialName("results") open var results: List<DATA>? = null,
+): BaseEmptyCollectionBodyResponse()
+
