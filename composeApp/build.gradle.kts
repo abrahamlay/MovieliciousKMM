@@ -86,6 +86,7 @@ android {
     }
     dependencies {
         debugImplementation(compose.uiTooling)
+        implementation(libs.androidx.material3.android)
     }
 }
 

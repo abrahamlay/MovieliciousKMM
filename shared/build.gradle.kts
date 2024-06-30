@@ -55,6 +55,7 @@ kotlin {
                 implementation(libs.ktor.client.android)
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.hilt.android)
+                api(libs.coil.compose)
                 configurations["kapt"].dependencies.add(
                     DefaultExternalModuleDependency(
                         "com.google.dagger", "hilt-android-compiler", "2.47")
