@@ -9,7 +9,7 @@ import io.ktor.client.request.get
 
 class PopularMovieApi {
     private val url = BaseNetworkImpl.getPath("3/movie/popular")
-    suspend fun getPopular(): BaseResponse<MovieDto> {
+    suspend fun getPopular(): MovieDto {
         return BaseNetworkImpl.networkClient.get(url){
             url {
                 parameters.append("api_key", Constants.API_KEY)

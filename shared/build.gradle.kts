@@ -4,17 +4,14 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    kotlin("plugin.serialization") version ("1.8.0")
+    alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.compose.compiler)
+    kotlin("plugin.serialization") version ("2.1.10")
 }
 
 kotlin {
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
-    }
-    
+    jvmToolchain(17)
+    androidTarget()
     listOf(
         iosX64(),
         iosArm64(),
@@ -31,11 +28,20 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // put your Multiplatform dependencies here
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.serialization.kotlinx.json)
+                api(libs.kotlinx.coroutines.core)
+                api(libs.ktor.client.core)
+                api(libs.ktor.client.logging)
+                api(libs.ktor.client.content.negotiation)
+                api(libs.ktor.serialization.kotlinx.json)
+
+                // those below plugin dependencies also support Kotlin Multiplatform.
+                api(libs.landscapist.placeholder)
+                api(libs.landscapist.animation)
+                api(libs.landscapist.palette)
+                api(libs.landscapist.coil3)
+                api(libs.koin.core)
+                api(libs.koin.test)
+//                api(libs.koin.android)
             }
         }
 
@@ -49,6 +55,13 @@ kotlin {
         val androidMain by getting{
             dependencies {
                 dependsOn(commonMain)
+//                implementation(platform(libs.androidx.compose.bom))
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
                 implementation(libs.ktor.client.android)
                 implementation(libs.ktor.client.okhttp)
             }
@@ -82,10 +95,34 @@ android {
     namespace = "org.abrahamlay.movielicious.kmm.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.6.10"
+    }
+    android.buildFeatures.buildConfig = true
+    flavorDimensions += "env"
+    productFlavors {
+        create("development") {
+            dimension = "env"
+            buildConfigField("String", "API_BASE_URL", "\"https://api.themoviedb.org/\"")
+        }
+
+        create("staging") {
+            dimension = "env"
+            buildConfigField("String", "API_BASE_URL", "\"https://api.themoviedb.org/\"")
+        }
+
+        create("production") {
+            dimension = "env"
+            buildConfigField("String", "API_BASE_URL", "\"https://api.themoviedb.org/\"")
+        }
     }
 }

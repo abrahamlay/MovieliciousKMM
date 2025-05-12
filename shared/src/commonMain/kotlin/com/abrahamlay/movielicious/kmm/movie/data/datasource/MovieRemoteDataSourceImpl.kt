@@ -16,21 +16,24 @@ class MovieRemoteDataSourceImpl(
     override suspend fun getPopular(): List<Movie> {
         val response = popularMovieApi.getPopular()
         val movies = mutableListOf<Movie>()
-        movies.addAll(BaseNetworkImpl.validateResponse(response).toData())
+//        movies.addAll(BaseNetworkImpl.validateResponse(response).toData())
+        movies.addAll(response.toData())
         return movies
     }
 
     override suspend fun getTopRated(): List<Movie> {
         val response = topRatedMovieApi.getTopRatedMovies()
         val movies = mutableListOf<Movie>()
-        movies.addAll(BaseNetworkImpl.validateResponse(response).toData())
+//        movies.addAll(BaseNetworkImpl.validateResponse(response).toData())
+        movies.addAll(response.toData())
         return movies
     }
 
     override suspend fun getNowPlaying(): List<Movie> {
         val response = nowPlayingMovieApi.getNowPlayingMovies()
         val movies = mutableListOf<Movie>()
-        movies.addAll(BaseNetworkImpl.validateResponse(response).toData())
+//        movies.addAll(BaseNetworkImpl.validateResponse(response).toData())
+        movies.addAll(response.toData())
         return movies
     }
 }

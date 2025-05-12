@@ -9,7 +9,7 @@ import io.ktor.client.request.get
 
 class NowPlayingMovieApi {
     private val url = BaseNetworkImpl.getPath("3/movie/now_playing")
-    suspend fun getNowPlayingMovies(): BaseResponse<MovieDto> {
+    suspend fun getNowPlayingMovies(): MovieDto {
         return BaseNetworkImpl.networkClient.get(url){
             url {
                 parameters.append("api_key", Constants.API_KEY)

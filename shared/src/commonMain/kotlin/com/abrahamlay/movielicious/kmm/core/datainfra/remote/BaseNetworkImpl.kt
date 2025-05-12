@@ -2,13 +2,22 @@ package com.abrahamlay.movielicious.kmm.core.datainfra.remote
 
 import com.abrahamlay.movielicious.kmm.core.datacore.network.CustomApiException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 object BaseNetworkImpl {
     val networkClient = NetworkClient {
-        install(Logging)
+        install(Logging) {
+            logger = object : Logger {
+                override fun log(message: String) {
+                    println("KtorLogger $message") // Ini hanya bisa di Android
+                }
+            }
+            level = LogLevel.ALL
+        }
         install(ContentNegotiation){
             json(Json{
                 prettyPrint = true

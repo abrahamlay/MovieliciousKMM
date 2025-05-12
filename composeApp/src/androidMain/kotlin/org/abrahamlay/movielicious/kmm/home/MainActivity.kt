@@ -1,6 +1,6 @@
-package org.abrahamlay.movielicious.kmm
+package org.abrahamlay.movielicious.kmm.home
 
-import App
+import org.abrahamlay.movielicious.kmm.component.App
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
