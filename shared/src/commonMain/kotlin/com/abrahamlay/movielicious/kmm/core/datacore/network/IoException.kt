@@ -1,6 +1,6 @@
 package com.abrahamlay.movielicious.kmm.core.datacore.network
 
-import io.ktor.utils.io.errors.IOException
+import kotlinx.io.IOException
 
 class IoException(
     private val errorMessage: String?,

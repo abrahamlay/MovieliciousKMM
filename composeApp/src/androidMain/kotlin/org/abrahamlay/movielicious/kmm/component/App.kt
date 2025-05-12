@@ -17,11 +17,12 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import movieliciouskmm.composeapp.generated.resources.Res
 import movieliciouskmm.composeapp.generated.resources.compose_multiplatform
+import org.abrahamlay.movielicious.kmm.theme.MovieliciousTheme
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
+    MovieliciousTheme {
         // A surface container using the 'background' color from the theme
         Surface(color = MaterialTheme.colors.background) {
             HomeComponent()

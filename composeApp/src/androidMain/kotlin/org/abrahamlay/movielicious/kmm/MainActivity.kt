@@ -1,4 +1,4 @@
-package org.abrahamlay.movielicious.kmm.home
+package org.abrahamlay.movielicious.kmm
 
 import org.abrahamlay.movielicious.kmm.component.App
 import android.os.Bundle

@@ -1,6 +1,6 @@
 package com.abrahamlay.movielicious.kmm.core.datacore.network
 
-import io.ktor.utils.io.errors.IOException
+import kotlinx.io.IOException
 
 class CustomApiException(status: String?, val apiMessage: String) : IOException(apiMessage) {
     companion object {
