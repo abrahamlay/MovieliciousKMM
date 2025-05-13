@@ -1,0 +1,12 @@
+platform :ios, '14.1'
+
+target 'MovieliciousKMM' do
+  use_frameworks!
+
+  # Tambahkan ini:
+  pod 'Shared', :path => '../shared'
+
+  # Pod lain yang kamu pakai
+  pod 'Alamofire'
+  pod 'Kingfisher'
+end

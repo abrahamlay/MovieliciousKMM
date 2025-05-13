@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,11 +8,13 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version ("2.1.10")
+    kotlin("native.cocoapods")
 }
 
 kotlin {
     jvmToolchain(17)
     androidTarget()
+    val xcf = XCFramework()
     listOf(
         iosX64(),
         iosArm64(),
@@ -20,6 +23,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "Shared"
             isStatic = true
+            xcf.add(this)
         }
     }
 
@@ -88,6 +92,15 @@ kotlin {
         iosSimulatorArm64Main.dependsOn(iosMain)
         iosSimulatorArm64Test.dependsOn(iosTest)
 
+    }
+    cocoapods {
+        summary = "Data Domain Movielicious App"
+        homepage = "Link to the Shared Module homepage"
+        ios.deploymentTarget = "14.1"
+        framework {
+            baseName = "Shared"
+        }
+        version = "1.0.0"
     }
 }
 

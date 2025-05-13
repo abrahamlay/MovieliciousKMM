@@ -2,6 +2,7 @@ package org.abrahamlay.movielicious.kmm.home
 
 import androidx.lifecycle.ViewModel
 import com.abrahamlay.movielicious.kmm.core.datacore.usecase.DataResult
+import com.abrahamlay.movielicious.kmm.core.datacore.usecase.DataStatus
 import com.abrahamlay.movielicious.kmm.movie.domain.model.Movie
 import com.abrahamlay.movielicious.kmm.movie.domain.usecase.GetPopularCollection
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,16 @@ class MainViewModel constructor(
 
     fun fetchMovie() {
         getPopularMovies.invoke { result ->
-            _movies.update {  result }
+            _movies.update {
+                when (result.status) {
+                    DataStatus.SUCCESS -> DataResult.Success(result.data ?: emptyList())
+                    DataStatus.ERROR -> DataResult.Failure(
+                        errorCode = result.errorCode,
+                        message = result.errorMessage
+                    )
+                    DataStatus.LOADING -> DataResult.Loading
+                }
+            }
         }
     }
 
