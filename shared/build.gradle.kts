@@ -1,6 +1,10 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
+val CONFIGURE_ANDROID = "android"
+val CONFIGURE_IOS = "ios"
+val RUN_CONFIG = CONFIGURE_ANDROID
+
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -11,21 +15,35 @@ plugins {
     kotlin("native.cocoapods")
 }
 
+val ModuleName = "Shared"
 kotlin {
     jvmToolchain(17)
     androidTarget()
-    val xcf = XCFramework()
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "Shared"
-            isStatic = true
-            xcf.add(this)
-        }
+//    if (RUN_CONFIG == CONFIGURE_IOS) {
+    val iosArm64Target = iosArm64()
+    val iosSimulatorArm64Target = iosSimulatorArm64()
+    val iosX64Target = iosX64()
+
+    val xcf = XCFramework(ModuleName)
+
+    iosArm64Target.binaries.framework {
+        baseName = ModuleName
+        isStatic = false
+        xcf.add(this)
     }
+
+    iosSimulatorArm64Target.binaries.framework {
+        baseName = ModuleName
+        isStatic = false
+        xcf.add(this)
+    }
+
+    iosX64Target.binaries.framework {
+        baseName = ModuleName
+        isStatic = false
+        xcf.add(this)
+    }
+//    }
 
 
     sourceSets {
@@ -56,7 +74,7 @@ kotlin {
             }
         }
 
-        val androidMain by getting{
+        val androidMain by getting {
             dependencies {
                 dependsOn(commonMain)
 //                implementation(platform(libs.androidx.compose.bom))
@@ -71,6 +89,8 @@ kotlin {
             }
         }
 
+
+//        if (RUN_CONFIG == CONFIGURE_IOS) {
         val iosX64Main by getting
         val iosArm64Main by getting
         val iosMain by creating {
@@ -81,7 +101,7 @@ kotlin {
                 implementation(libs.ktor.client.darwin)
             }
         }
-        val iosTest by creating{
+        val iosTest by creating {
             dependsOn(commonTest)
         }
 
@@ -91,16 +111,18 @@ kotlin {
 
         iosSimulatorArm64Main.dependsOn(iosMain)
         iosSimulatorArm64Test.dependsOn(iosTest)
-
+//        }
     }
-    cocoapods {
-        summary = "Data Domain Movielicious App"
-        homepage = "Link to the Shared Module homepage"
-        ios.deploymentTarget = "14.1"
-        framework {
-            baseName = "Shared"
+    if (RUN_CONFIG == CONFIGURE_IOS) {
+        cocoapods {
+            summary = "Data Domain Movielicious App"
+            homepage = "Link to the Shared Module homepage"
+            ios.deploymentTarget = "14.1"
+            framework {
+                baseName = ModuleName
+            }
+            version = "1.0.0"
         }
-        version = "1.0.0"
     }
 }
 
