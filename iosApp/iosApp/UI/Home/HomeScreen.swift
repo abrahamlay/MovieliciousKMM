@@ -20,13 +20,14 @@ struct HomeScreen: View {
                 VStack(spacing: 16) {
                     MovieSection(title: "Popular Movies", movies: viewModel.movies)
                     Divider()
-                    MovieSection(title: "Popular Movies", movies: viewModel.movies)
+                    //                    MovieSection(title: "Popular Movies", movies: viewModel.movies)
                 }
                 .padding(.top, 16)
+            }.refreshable {
+                viewModel.fetchMovies()
+            }.onAppear{
+                viewModel.fetchMovies()
             }
-        }
-        .onAppear {
-            viewModel.fetchMovies()
         }
     }
 }
@@ -61,7 +62,17 @@ struct MovieCard: View {
             Button(action: {
                 print(movie.title ?? "unknown title")
             }) {
-                if let imageUrl = movie.posterPath,
+                
+                let image = movie.posterPath
+                let imageUrl: String? = {
+                    guard let image = image else { return "" }
+                    if !image.contains("https://") && !image.contains("http://") {
+                        return String(format: Constants.MOVIE_THUMBNAIL_BASE_URL_MEDIUM, image)
+                    } else {
+                        return image
+                    }
+                }()
+                if let imageUrl = imageUrl,
                    let url = URL(string: imageUrl) {
                     KFImage(url)
                         .resizable()

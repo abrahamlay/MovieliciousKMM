@@ -39,8 +39,9 @@ class HomeViewModel: ObservableObject {
         
         // Dummy data atau KMM interop di sini
 //        self.movies = [
-//            Movie(id: 1, title: "Batman", posterPath: "/xyz.jpg", voteAverage: 8.5),
-//            Movie(id: 2, title: "Superman", posterPath: "/abc.jpg", voteAverage: 7.4)
+//            Movie(voteCount: Int32(7.4), id: 1, video: false, voteAverage: 7.4, title: "Avenger", popularity: 7.4, posterPath: "/yFHHfHcUgGAxziP1C3lLt0q2T4s.jpg", originalLanguage: "en", originalTitle: "Avenger", genreIds: [10751,14], backdropPath: "/2Nti3gYAX513wvhp8IiLL6ZDyOm.jpg", adult: true, overview: "real Avenger overview", releaseDate: "25-12-2025"),
+//            Movie(voteCount: Int32(7.4), id: 2, video: false, voteAverage: 7.4, title: "Batman", popularity: 7.4, posterPath: "/yFHHfHcUgGAxziP1C3lLt0q2T4s.jpg", originalLanguage: "en", originalTitle: "Batman", genreIds: [10751,14], backdropPath: "/2Nti3gYAX513wvhp8IiLL6ZDyOm.jpg", adult: true, overview: "real Batman overview", releaseDate: "25-12-2025"),
+//            Movie(voteCount: Int32(7.4), id: 2, video: false, voteAverage: 7.4, title: "Spiderman", popularity: 7.4, posterPath: "/yFHHfHcUgGAxziP1C3lLt0q2T4s.jpg", originalLanguage: "en", originalTitle: "Spiderman", genreIds: [10751,14], backdropPath: "/2Nti3gYAX513wvhp8IiLL6ZDyOm.jpg", adult: true, overview: "real Spiderman overview", releaseDate: "25-12-2025"),
 //        ]
     }
     

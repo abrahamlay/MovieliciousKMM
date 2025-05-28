@@ -22,7 +22,7 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "Shared"
-            isStatic = true
+            freeCompilerArgs += "-Xbinary=bundleId=org.abrahamlay.movielicious.kmm"
             xcf.add(this)
         }
     }
