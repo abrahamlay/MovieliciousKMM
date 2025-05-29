@@ -11,16 +11,16 @@ import Shared
 import Kingfisher
 
 struct HomeScreen: View {
-    @ObservedObject var viewModel = HomeViewModel()
+    @StateObject var viewModel = HomeViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
             Toolbar()
             ScrollView {
                 VStack(spacing: 16) {
-                    MovieSection(title: "Popular Movies", movies: viewModel.movies)
-                    Divider()
-                    //                    MovieSection(title: "Popular Movies", movies: viewModel.movies)
+                    MovieSection(title: "Now Playing Movies").environmentObject(viewModel)
+                    MovieSection(title: "Top Rated Movies").environmentObject(viewModel)
+                    MovieSection(title: "Popular Movies").environmentObject(viewModel)
                 }
                 .padding(.top, 16)
             }.refreshable {
@@ -34,77 +34,96 @@ struct HomeScreen: View {
 
 struct MovieSection: View {
     let title: String
-    let movies: [Movie]
-
+    @EnvironmentObject var viewModel: HomeViewModel
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text(title)
                 .font(.title2)
                 .padding(.horizontal)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(movies, id: \.id) { movie in
-                        MovieCard(movie: movie)
-                    }
+                .padding(.vertical)
+            switch viewModel.state {
+            case .idle:
+                Color.clear.onAppear { viewModel.fetchMovies() }
+            case .loading:
+                LoadingView()
+            case .loaded(let movies):
+                HorizontalMovieList(movies: movies)
+                    .frame(height: 300)  // ← Add fixed height
+            case .error(let message):
+                ErrorView(error: message) {
+                    viewModel.fetchMovies()
                 }
-                .padding(.horizontal)
             }
+        }
+    }
+}
+
+struct HorizontalMovieList: View {
+    let movies: [Movie]
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                ForEach(movies, id: \.id) { movie in
+                    MovieCard(movie: movie)
+                }
+            }.padding(.vertical)
         }
     }
 }
 
 struct MovieCard: View {
     let movie: Movie
-
+    
     var body: some View {
-        VStack(alignment: .center) {
-            Button(action: {
-                print(movie.title ?? "unknown title")
-            }) {
-                
-                let image = movie.posterPath
-                let imageUrl: String? = {
-                    guard let image = image else { return "" }
-                    if !image.contains("https://") && !image.contains("http://") {
-                        return String(format: Constants.MOVIE_THUMBNAIL_BASE_URL_MEDIUM, image)
+        VStack(alignment: .center, spacing: 8) {
+            Button(action: { print(movie.title ?? "unknown title") }) {
+                // Image view
+                Group {
+                    if let imageUrl = formatImageUrl(movie.posterPath ?? ""),
+                       let url = URL(string: imageUrl) {
+                        KFImage(url)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 180, height: 270)  // ← Fixed size
+                            .clipped()
                     } else {
-                        return image
+                        Image(systemName: "photo")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 180, height: 270)
+                            .foregroundColor(.gray)
                     }
-                }()
-                if let imageUrl = imageUrl,
-                   let url = URL(string: imageUrl) {
-                    KFImage(url)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } else {
-                    // Tampilin placeholder atau image default
-                    Image(systemName: "photo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .foregroundColor(.gray)
                 }
+                .cornerRadius(8)
+                .shadow(radius: 4)
             }
-
-            Text(movie.title ?? "unknown title")
-                .font(.headline)
-                .lineLimit(1)
-                .frame(width: 180)
-                .multilineTextAlignment(.center)
-
-            HStack {
-                Image(systemName: "star.fill")
-                    .foregroundColor(.yellow)
-                Text(String(format: "%.1f", movie.voteAverage))
+            
+            // Text content
+            VStack(spacing: 4) {
+                Text(movie.title ?? "unknown title")
+                    .font(.headline)
+                    .lineLimit(1)
+                    .frame(width: 180)
+                
+                HStack {
+                    Image(systemName: "star.fill")
+                        .foregroundColor(.yellow)
+                    Text(String(format: "%.1f", movie.voteAverage))
+                }
+                .font(.caption)
             }
         }
+        .padding(8)
     }
-
-    func formatImageUrl(_ path: String) -> String {
-        if path.hasPrefix("http") {
+    
+    func formatImageUrl(_ path: String) -> String? {
+        if path.isEmpty {
+            return ""
+        } else if path.hasPrefix("http") {
             return path
         } else {
-            return String(format: "https://image.tmdb.org/t/p/w500%@", path)
+            return "https://image.tmdb.org/t/p/w500\(path)"
         }
     }
 }
