@@ -1,0 +1,97 @@
+CREATE TABLE movie (
+    vote_count INTEGER NOT NULL,
+    id INTEGER NOT NULL PRIMARY KEY,
+    video INTEGER AS Boolean NOT NULL,
+    vote_average REAL NOT NULL,
+    title TEXT,
+    popularity REAL NOT NULL,
+    poster_path TEXT,
+    original_language TEXT,
+    original_title TEXT,
+    backdrop_path TEXT,
+    adult INTEGER AS Boolean NOT NULL,
+    overview TEXT,
+    release_date TEXT
+);
+
+-- Junction table for genreIds (since it's a List<Int>)
+CREATE TABLE movie_genre (
+    movie_id INTEGER NOT NULL,
+    genre_id INTEGER NOT NULL,
+    FOREIGN KEY (movie_id) REFERENCES movie(id) ON DELETE CASCADE,
+    PRIMARY KEY (movie_id, genre_id)
+);
+
+-- Queries
+selectAll:
+SELECT * FROM movie;
+
+selectById:
+SELECT * FROM movie
+WHERE id = ?;
+
+insertMovie:
+INSERT INTO movie(
+    vote_count, id, video, vote_average, title, popularity,
+    poster_path, original_language, original_title,
+    backdrop_path, adult, overview, release_date
+)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+insertGenreForMovie:
+INSERT INTO movie_genre(movie_id, genre_id)
+VALUES(?, ?);
+
+selectGenresForMovie:
+SELECT genre_id FROM movie_genre
+WHERE movie_id = ?;
+
+deleteMovie:
+DELETE FROM movie
+WHERE id = ?;
+
+deleteAllMovies:
+DELETE FROM movie;
+
+deleteGenresForMovie:
+DELETE FROM movie_genre
+WHERE movie_id = ?;
+
+-- Mark a movie as favorite
+insertFavorite:
+INSERT OR REPLACE INTO favorite_movie(
+    vote_count, id, video, vote_average, title, popularity,
+    poster_path, original_language, original_title,
+    backdrop_path, adult, overview, release_date
+)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Remove from favorites
+deleteFavorite:
+DELETE FROM favorite_movie
+WHERE id = ?;
+
+-- Check if movie is favorite
+isFavorite:
+SELECT EXISTS(SELECT 1 FROM favorite_movie WHERE id = ?);
+
+-- Get all favorites
+getAllFavorites:
+SELECT * FROM favorite_movie;
+
+-- Create favorite movies table (add to your CREATE TABLE section)
+CREATE TABLE favorite_movie (
+    vote_count INTEGER NOT NULL,
+    id INTEGER NOT NULL PRIMARY KEY,
+    video INTEGER AS Boolean NOT NULL,
+    vote_average REAL NOT NULL,
+    title TEXT,
+    popularity REAL NOT NULL,
+    poster_path TEXT,
+    original_language TEXT,
+    original_title TEXT,
+    backdrop_path TEXT,
+    adult INTEGER AS Boolean NOT NULL,
+    overview TEXT,
+    release_date TEXT
+);

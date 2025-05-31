@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
@@ -9,23 +7,37 @@ plugins {
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version ("2.1.10")
     kotlin("native.cocoapods")
+    alias(libs.plugins.sqlDelight)
 }
+
+sqldelight {
+    databases {
+        create("AppDatabase") {
+            packageName.set("org.abrahamlay.movielicious.kmm")
+        }
+    }
+}
+
+val enableIos = project.properties["enableIos"]?.toString()?.toBoolean() ?: false
+
 
 kotlin {
     jvmToolchain(17)
     androidTarget()
-    val xcf = XCFramework()
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "Shared"
-            freeCompilerArgs += "-Xbinary=bundleId=org.abrahamlay.movielicious.kmm"
-            xcf.add(this)
+//    if (enableIos) {
+        val xcf = XCFramework()
+        listOf(
+            iosX64(),
+            iosArm64(),
+            iosSimulatorArm64()
+        ).forEach { iosTarget ->
+            iosTarget.binaries.framework {
+                baseName = "Shared"
+                freeCompilerArgs += "-Xbinary=bundleId=org.abrahamlay.movielicious.kmm"
+                xcf.add(this)
+            }
         }
-    }
+//    }
 
 
     sourceSets {
@@ -68,40 +80,46 @@ kotlin {
                 implementation(compose.components.uiToolingPreview)
                 implementation(libs.ktor.client.android)
                 implementation(libs.ktor.client.okhttp)
+                implementation(libs.sqldelight.android.driver)
             }
         }
 
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosMain by creating {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            dependencies {
-                implementation(libs.ktor.client.darwin)
+//        if(enableIos) {
+            val iosX64Main by getting
+            val iosArm64Main by getting
+            val iosMain by creating {
+                dependsOn(commonMain)
+                iosX64Main.dependsOn(this)
+                iosArm64Main.dependsOn(this)
+                dependencies {
+                    implementation(libs.ktor.client.darwin)
+                    implementation(libs.sqldelight.native.driver)
+                }
             }
-        }
-        val iosTest by creating{
-            dependsOn(commonTest)
-        }
+            val iosTest by creating {
+                dependsOn(commonTest)
+            }
 
 
-        val iosSimulatorArm64Main by sourceSets.getting
-        val iosSimulatorArm64Test by sourceSets.getting
+            val iosSimulatorArm64Main by sourceSets.getting
+            val iosSimulatorArm64Test by sourceSets.getting
 
-        iosSimulatorArm64Main.dependsOn(iosMain)
-        iosSimulatorArm64Test.dependsOn(iosTest)
+            iosSimulatorArm64Main.dependsOn(iosMain)
+            iosSimulatorArm64Test.dependsOn(iosTest)
+//        }
 
     }
-    cocoapods {
-        summary = "Data Domain Movielicious App"
-        homepage = "Link to the Shared Module homepage"
-        ios.deploymentTarget = "14.1"
-        framework {
-            baseName = "Shared"
+//    if(enableIos) {
+        cocoapods {
+            summary = "Data Domain Movielicious App"
+            homepage = "Link to the Shared Module homepage"
+            ios.deploymentTarget = "14.1"
+            framework {
+                baseName = "Shared"
+            }
+            version = "1.0.0"
         }
-        version = "1.0.0"
-    }
+//    }
 }
 
 android {
@@ -136,6 +154,18 @@ android {
         create("production") {
             dimension = "env"
             buildConfigField("String", "API_BASE_URL", "\"https://api.themoviedb.org/\"")
+        }
+    }
+    compileOptions {
+//        isCoreLibraryDesugaringEnabled = true
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Add more exclusions as needed
+            excludes += "**/*.kotlin_metadata"
+            excludes += "**/*.kotlin_module"
+            excludes += "**/module-info.class"
         }
     }
 }
