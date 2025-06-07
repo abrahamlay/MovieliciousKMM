@@ -12,23 +12,15 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-          - name: Install GitHub CLI
-            run: |
-              brew update
-              brew install gh
-#          - name: Install Microsoft Edge
-#            run: |
-#              brew update
-#              brew install --cask microsoft-edge
 
-          - name: Set up JDK
-            uses: actions/setup-java@v3
-            with:
-              java-version: '21'
-              distribution: 'zulu'
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'zulu'
 
-          - name: Grant execute permission for gradlew
-            run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-          - name: Build with Gradle
-            run: ./gradlew build
+      - name: Build with Gradle
+        run: ./gradlew build
