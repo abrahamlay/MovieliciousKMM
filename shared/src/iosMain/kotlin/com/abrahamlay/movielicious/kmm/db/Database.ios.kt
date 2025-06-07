@@ -7,6 +7,6 @@ import app.cash.sqldelight.driver.native.NativeSqliteDriver
 //actual class DriverFactory() {
 //    actual val databaseName = "movieliciouskmm.db"
 //    actual fun createDriver(): SqlDriver {
-//        return NativeSqliteDriver(AppDatabase.Schema, databaseName)
+//        return NativeSqliteDriver(AppDatabase, databaseName)
 //    }
 //}

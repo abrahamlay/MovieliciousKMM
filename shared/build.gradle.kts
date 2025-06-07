@@ -13,7 +13,7 @@ plugins {
 sqldelight {
     databases {
         create("AppDatabase") {
-            packageName.set("org.abrahamlay.movielicious.kmm")
+            packageName.set("org.abrahamlay.movielicious.kmm.db")
         }
     }
 }
@@ -24,21 +24,6 @@ val enableIos = project.properties["enableIos"]?.toString()?.toBoolean() ?: fals
 kotlin {
     jvmToolchain(17)
     androidTarget()
-//    if (enableIos) {
-        val xcf = XCFramework()
-        listOf(
-            iosX64(),
-            iosArm64(),
-            iosSimulatorArm64()
-        ).forEach { iosTarget ->
-            iosTarget.binaries.framework {
-                baseName = "Shared"
-                freeCompilerArgs += "-Xbinary=bundleId=org.abrahamlay.movielicious.kmm"
-                xcf.add(this)
-            }
-        }
-//    }
-
 
     sourceSets {
         val commonMain by getting {
@@ -49,7 +34,7 @@ kotlin {
                 api(libs.ktor.client.logging)
                 api(libs.ktor.client.content.negotiation)
                 api(libs.ktor.serialization.kotlinx.json)
-
+                api(libs.sqldelight.runtime)
                 // those below plugin dependencies also support Kotlin Multiplatform.
                 api(libs.landscapist.placeholder)
                 api(libs.landscapist.animation)
@@ -68,7 +53,8 @@ kotlin {
             }
         }
 
-        val androidMain by getting{
+
+        val androidMain by getting {
             dependencies {
                 dependsOn(commonMain)
 //                implementation(platform(libs.androidx.compose.bom))
@@ -84,7 +70,20 @@ kotlin {
             }
         }
 
-//        if(enableIos) {
+        if(enableIos) {
+            val xcf = XCFramework()
+            listOf(
+                iosX64(),
+                iosArm64(),
+                iosSimulatorArm64()
+            ).forEach { iosTarget ->
+                iosTarget.binaries.framework {
+                    baseName = "Shared"
+                    freeCompilerArgs += "-Xbinary=bundleId=org.abrahamlay.movielicious.kmm"
+                    xcf.add(this)
+                }
+            }
+
             val iosX64Main by getting
             val iosArm64Main by getting
             val iosMain by creating {
@@ -106,20 +105,18 @@ kotlin {
 
             iosSimulatorArm64Main.dependsOn(iosMain)
             iosSimulatorArm64Test.dependsOn(iosTest)
-//        }
 
-    }
-//    if(enableIos) {
-        cocoapods {
-            summary = "Data Domain Movielicious App"
-            homepage = "Link to the Shared Module homepage"
-            ios.deploymentTarget = "14.1"
-            framework {
-                baseName = "Shared"
+            cocoapods {
+                summary = "Data Domain Movielicious App"
+                homepage = "Link to the Shared Module homepage"
+                ios.deploymentTarget = "14.1"
+                framework {
+                    baseName = "Shared"
+                }
+                version = "1.0.0"
             }
-            version = "1.0.0"
         }
-//    }
+    }
 }
 
 android {
