@@ -7,7 +7,9 @@ import com.abrahamlay.movielicious.kmm.movie.data.datasource.MovieRemoteDataSour
 import com.abrahamlay.movielicious.kmm.movie.data.repository.MovieRepositoryImpl
 import com.abrahamlay.movielicious.kmm.movie.domain.abstraction.datasource.MovieRemoteDataSource
 import com.abrahamlay.movielicious.kmm.movie.domain.abstraction.repository.MovieRepository
+import com.abrahamlay.movielicious.kmm.movie.domain.usecase.GetNowPlayingCollection
 import com.abrahamlay.movielicious.kmm.movie.domain.usecase.GetPopularCollection
+import com.abrahamlay.movielicious.kmm.movie.domain.usecase.GetTopRatedCollection
 import org.abrahamlay.movielicious.kmm.home.HomeViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -26,5 +28,7 @@ val androidModule = module {
     }
     single { MovieRepositoryImpl(get(MovieRemoteDataSource::class.java)) as MovieRepository }
     single { GetPopularCollection(get()) }
+    single { GetNowPlayingCollection(get()) }
+    single { GetTopRatedCollection(get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
 }

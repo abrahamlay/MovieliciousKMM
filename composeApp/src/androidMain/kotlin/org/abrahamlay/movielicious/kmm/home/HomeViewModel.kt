@@ -84,6 +84,11 @@ open class HomeViewModel constructor(
         TOP_RATED
     }
 
+    enum class SectionType {
+        SHOWCASE,
+        HORIZONTAL_LIST
+    }
+
 
     override fun onCleared() {
         super.onCleared()
