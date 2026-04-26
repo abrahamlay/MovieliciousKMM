@@ -1,0 +1,176 @@
+name: iOS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'TestFlight'
+        type: choice
+        options:
+          - TestFlight
+          - AppStore
+      configuration:
+        description: 'Configuration'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Debug
+          - Release
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  ios-release:
+    name: Release iOS
+    runs-on: macos-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Build iOS Framework
+        run: ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+
+      - name: Setup iOS Code Signing
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_CERTIFICATES_ID: ${{ secrets.APPLE_CERTIFICATES_ID }}
+          APPLE_CERTIFICATES_P12: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
+        run: |
+          # Create keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain-db
+          security set-keychain-settings -lut 21600 build.keychain-db
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain-db
+
+          # Import certificate
+          echo -n "$APPLE_CERTIFICATES_P12" | base64 -d > certificates.p12
+          security import certificates.p12 -P "" -A -t cert -f pkcs12 -k build.keychain-db
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" build.keychain-db
+          security list-keychain -d user -s build.keychain-db
+
+      - name: Setup Provisioning Profile
+        env:
+          APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          echo -n "$APPLE_PROVISIONING_PROFILE" | base64 -d > MovieliciousKMM.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp MovieliciousKMM.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build iOS Project
+        env:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGNING_REQUIRED: YES
+          CODE_SIGNING_ALLOWED: NO
+          DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cd iosApp
+          pod install
+          xcodebuild -workspace iosApp.xcworkspace \
+            -scheme iosApp \
+            -configuration ${{ inputs.configuration }} \
+            -destination 'generic/platform=iOS' \
+            -archivePath iosApp.xcarchive \
+            build \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Export iOS Archive
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath iosApp/build/iosApp.xcarchive \
+            -exportPath iosApp/build \
+            -exportOptionsPlist iosApp/ExportOptions.plist
+
+      - name: Upload IPA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-${{ inputs.environment }}
+          path: iosApp/build/*.ipa
+          retention-days: 14
+
+  ios-deploy-testflight:
+    name: Deploy to TestFlight
+    runs-on: macos-latest
+    needs: ios-release
+    if: inputs.environment == 'TestFlight'
+    environment: TestFlight
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+
+      - name: Download IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa-${{ inputs.environment }}
+          path: ./
+
+      - name: Upload to App Store Connect
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun altool --upload-app \
+            -t ios \
+            -f *.ipa \
+            -u "$APPLE_ID" \
+            -p "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID"
+
+  ios-deploy-appstore:
+    name: Deploy to App Store
+    runs-on: macos-latest
+    needs: ios-release
+    if: inputs.environment == 'AppStore'
+    environment: AppStore
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
+
+      - name: Download IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa-${{ inputs.environment }}
+          path: ./
+
+      - name: Upload to App Store Connect
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun altool --upload-app \
+            -t ios \
+            -f *.ipa \
+            -u "$APPLE_ID" \
+            -p "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID"

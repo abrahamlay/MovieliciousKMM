@@ -1,0 +1,138 @@
+name: Android Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      flavor:
+        description: 'Flavor'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  android-release:
+    name: Release Android
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Create Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo $KEYSTORE_BASE64 | base64 -d > release.keystore
+
+      - name: Build Android Release AAB
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew :composeApp:assembleRelease \
+            -Pandroid.injected.signing.key.store.file=release.keystore \
+            -Pandroid.injected.signing.key.store.password=$KEY_STORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.alias.password=$KEY_PASSWORD \
+            -Penvironment=${{ inputs.environment }} \
+            -Pflavor=${{ inputs.flavor }}
+
+      - name: Upload AAB artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab-${{ inputs.environment }}-${{ inputs.flavor }}
+          path: composeApp/build/outputs/bundle/**/*.aab
+          retention-days: 14
+
+  android-deploy-staging:
+    name: Deploy to Internal Testing
+    runs-on: ubuntu-latest
+    needs: android-release
+    if: inputs.environment == 'staging' && inputs.flavor == 'production'
+    environment: staging
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Download AAB
+        uses: actions/download-artifact@v4
+        with:
+          name: android-aab-${{ inputs.environment }}-${{ inputs.flavor }}
+          path: composeApp/build/outputs/bundle/
+
+      - name: Upload to Google Play Internal Testing
+        uses: r0adkll/upload-google-play@v1
+        with:
+          service-account-json: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          package-name: org.abrahamlay.movielicious.kmm
+          release-files: composeApp/build/outputs/bundle/*/production.aab
+          track: internal
+          status: completed
+
+  android-deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: android-release
+    if: inputs.environment == 'production' && inputs.flavor == 'production'
+    environment: production
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Download AAB
+        uses: actions/download-artifact@v4
+        with:
+          name: android-aab-${{ inputs.environment }}-${{ inputs.flavor }}
+          path: composeApp/build/outputs/bundle/
+
+      - name: Upload to Google Play Production
+        uses: r0adkll/upload-google-play@v1
+        with:
+          service-account-json: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          package-name: org.abrahamlay.movielicious.kmm
+          release-files: composeApp/build/outputs/bundle/*/production.aab
+          track: production
+          status: completed
