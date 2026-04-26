@@ -1,5 +1,6 @@
 package org.abrahamlay.movielicious.kmm.home
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abrahamlay.movielicious.kmm.core.datacore.usecase.DataResult

@@ -41,14 +41,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
 
-      - name: Build iOS Framework
-        run: ./gradlew :shared:embedAndSignAppleFrameworkForXcode
-
       - name: Build iOS Project
         run: |
           cd iosApp
+          gem list cocoapods -i || sudo gem install cocoapods
           pod install
-          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 16' build CODE_SIGNING_ALLOWED=NO
+          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' build CODE_SIGNING_ALLOWED=NO
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -77,13 +75,11 @@ jobs:
         uses: gradle/gradle-build-action@v3
 
       - name: Run Kotlin unit tests
-        run: ./gradlew :shared:testDebugUnitTest
-
-      - name: Build iOS Framework for testing
-        run: ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+        run: ./gradlew :shared:testDevelopmentDebugUnitTest
 
       - name: Run iOS tests
         run: |
           cd iosApp
+          gem list cocoapods -i || sudo gem install cocoapods
           pod install
-          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 16' test CODE_SIGNING_ALLOWED=NO
+          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' test CODE_SIGNING_ALLOWED=NO

@@ -42,7 +42,7 @@ jobs:
         uses: gradle/gradle-build-action@v3
 
       - name: Run lint
-        run: ./gradlew :shared:lint :composeApp:lint
+        run: ./gradlew :shared:lintDevelopmentDebug :composeApp:lintDevelopmentDebug
 
   android-build:
     name: Build Android
@@ -62,13 +62,13 @@ jobs:
         uses: gradle/gradle-build-action@v3
 
       - name: Build Android Debug APK
-        run: ./gradlew :composeApp:assembleDebug
+        run: ./gradlew :composeApp:assembleDevelopmentDebug
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk
-          path: composeApp/build/outputs/apk/debug/*.apk
+          path: composeApp/build/outputs/apk/development/debug/*.apk
           retention-days: 7
 
   android-unit-tests:
@@ -89,7 +89,7 @@ jobs:
         uses: gradle/gradle-build-action@v3
 
       - name: Run unit tests
-        run: ./gradlew :shared:testDebugUnitTest :composeApp:testDebugUnitTest
+        run: ./gradlew :shared:testDevelopmentDebugUnitTest :composeApp:testDevelopmentDebugUnitTest
 
   android-instrumented-tests:
     name: Instrumented Tests
