@@ -1,9 +1,8 @@
 package com.abrahamlay.movielicious.kmm.movie.data.datasource
 
-import com.abrahamlay.movielicious.kmm.db.MovieEntity
 import com.abrahamlay.movielicious.kmm.db.MovieQueries
+import com.abrahamlay.movielicious.kmm.db.genreIdsJson
 import com.abrahamlay.movielicious.kmm.db.toDomain
-import com.abrahamlay.movielicious.kmm.db.toEntity
 import com.abrahamlay.movielicious.kmm.movie.domain.abstraction.repository.MovieLocalDataSource
 import com.abrahamlay.movielicious.kmm.movie.domain.model.Movie
 
@@ -20,7 +19,23 @@ class MovieLocalDataSourceImpl(
     override fun savePopularMovies(movies: List<Movie>) {
         movieQueries.deleteMoviesByType(MOVIE_TYPE_POPULAR)
         movies.forEach { movie ->
-            movieQueries.insertMovie(movie.toEntity(MOVIE_TYPE_POPULAR))
+            movieQueries.insertMovie(
+                id = movie.id.toLong(),
+                voteCount = movie.voteCount.toLong(),
+                video = if (movie.video) 1L else 0L,
+                voteAverage = movie.voteAverage,
+                title = movie.title,
+                popularity = movie.popularity,
+                posterPath = movie.posterPath,
+                originalLanguage = movie.originalLanguage,
+                originalTitle = movie.originalTitle,
+                genreIds = movie.genreIdsJson(),
+                backdropPath = movie.backdropPath,
+                adult = if (movie.adult) 1L else 0L,
+                overview = movie.overview,
+                releaseDate = movie.releaseDate,
+                type = MOVIE_TYPE_POPULAR
+            )
         }
     }
 
@@ -33,7 +48,23 @@ class MovieLocalDataSourceImpl(
     override fun saveTopRatedMovies(movies: List<Movie>) {
         movieQueries.deleteMoviesByType(MOVIE_TYPE_TOP_RATED)
         movies.forEach { movie ->
-            movieQueries.insertMovie(movie.toEntity(MOVIE_TYPE_TOP_RATED))
+            movieQueries.insertMovie(
+                id = movie.id.toLong(),
+                voteCount = movie.voteCount.toLong(),
+                video = if (movie.video) 1L else 0L,
+                voteAverage = movie.voteAverage,
+                title = movie.title,
+                popularity = movie.popularity,
+                posterPath = movie.posterPath,
+                originalLanguage = movie.originalLanguage,
+                originalTitle = movie.originalTitle,
+                genreIds = movie.genreIdsJson(),
+                backdropPath = movie.backdropPath,
+                adult = if (movie.adult) 1L else 0L,
+                overview = movie.overview,
+                releaseDate = movie.releaseDate,
+                type = MOVIE_TYPE_TOP_RATED
+            )
         }
     }
 
@@ -46,7 +77,23 @@ class MovieLocalDataSourceImpl(
     override fun saveNowPlayingMovies(movies: List<Movie>) {
         movieQueries.deleteMoviesByType(MOVIE_TYPE_NOW_PLAYING)
         movies.forEach { movie ->
-            movieQueries.insertMovie(movie.toEntity(MOVIE_TYPE_NOW_PLAYING))
+            movieQueries.insertMovie(
+                id = movie.id.toLong(),
+                voteCount = movie.voteCount.toLong(),
+                video = if (movie.video) 1L else 0L,
+                voteAverage = movie.voteAverage,
+                title = movie.title,
+                popularity = movie.popularity,
+                posterPath = movie.posterPath,
+                originalLanguage = movie.originalLanguage,
+                originalTitle = movie.originalTitle,
+                genreIds = movie.genreIdsJson(),
+                backdropPath = movie.backdropPath,
+                adult = if (movie.adult) 1L else 0L,
+                overview = movie.overview,
+                releaseDate = movie.releaseDate,
+                type = MOVIE_TYPE_NOW_PLAYING
+            )
         }
     }
 

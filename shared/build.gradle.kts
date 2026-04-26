@@ -13,7 +13,7 @@ plugins {
 sqldelight {
     databases {
         create("AppDatabase") {
-            packageName.set("org.abrahamlay.movielicious.kmm.db")
+            packageName.set("com.abrahamlay.movielicious.kmm.db")
         }
     }
 }
