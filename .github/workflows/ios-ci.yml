@@ -1,0 +1,85 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [ master, develop, 'feature/**' ]
+    paths:
+      - 'shared/**'
+      - 'iosApp/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/ios-ci.yml'
+  pull_request:
+    branches: [ master, develop ]
+    paths:
+      - 'shared/**'
+      - 'iosApp/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/ios-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-build:
+    name: Build iOS
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Build iOS Project
+        run: |
+          cd iosApp
+          gem list cocoapods -i || sudo gem install cocoapods
+          pod install
+          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' build CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-build
+          path: |
+            iosApp/build/**/*.app
+            iosApp/build/**/*.dSYM
+          retention-days: 7
+
+  ios-unit-tests:
+    name: Unit Tests
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Run Kotlin unit tests
+        run: ./gradlew :shared:testDevelopmentDebugUnitTest
+
+      - name: Run iOS tests
+        run: |
+          cd iosApp
+          gem list cocoapods -i || sudo gem install cocoapods
+          pod install
+          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' test CODE_SIGNING_ALLOWED=NO
