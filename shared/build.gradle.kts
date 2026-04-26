@@ -18,7 +18,7 @@ sqldelight {
     }
 }
 
-val enableIos = project.properties["enableIos"]?.toString()?.toBoolean() ?: false
+val enableIos = project.properties["enableIos"]?.toString()?.toBoolean() ?: true
 
 
 kotlin {
@@ -28,24 +28,25 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // put your Multiplatform dependencies here
+                api(compose.runtime)
+                api(compose.foundation)
+                api(compose.ui)
+                api(compose.material)
+                api(compose.components.resources)
+                api(compose.components.uiToolingPreview)
+                api(libs.lifecycle.runtime.compose)
+
                 api(libs.kotlinx.coroutines.core)
                 api(libs.ktor.client.core)
                 api(libs.ktor.client.logging)
                 api(libs.ktor.client.content.negotiation)
                 api(libs.ktor.serialization.kotlinx.json)
                 api(libs.sqldelight.runtime)
-                // those below plugin dependencies also support Kotlin Multiplatform.
-                api(libs.landscapist.placeholder)
-                api(libs.landscapist.animation)
-                api(libs.landscapist.palette)
                 api(libs.landscapist.coil3)
                 api(libs.koin.core)
                 api(libs.koin.test)
-//                api(libs.koin.android)
             }
         }
-
 
         val commonTest by getting {
             dependencies {
@@ -53,17 +54,13 @@ kotlin {
             }
         }
 
-
         val androidMain by getting {
             dependencies {
                 dependsOn(commonMain)
-//                implementation(platform(libs.androidx.compose.bom))
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material)
-                implementation(compose.ui)
-                implementation(compose.components.resources)
-                implementation(compose.components.uiToolingPreview)
+                implementation(compose.preview)
+                implementation(libs.androidx.activity.compose)
+                implementation(libs.koin.android)
+                implementation(libs.koin.androidx.compose)
                 implementation(libs.ktor.client.android)
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.sqldelight.android.driver)
@@ -98,7 +95,6 @@ kotlin {
             val iosTest by creating {
                 dependsOn(commonTest)
             }
-
 
             val iosSimulatorArm64Main by sourceSets.getting
             val iosSimulatorArm64Test by sourceSets.getting
@@ -154,12 +150,10 @@ android {
         }
     }
     compileOptions {
-//        isCoreLibraryDesugaringEnabled = true
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // Add more exclusions as needed
             excludes += "**/*.kotlin_metadata"
             excludes += "**/*.kotlin_module"
             excludes += "**/module-info.class"
