@@ -3,6 +3,7 @@ package org.abrahamlay.movielicious.kmm.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,15 +17,15 @@ import androidx.compose.material.Text
 import androidx.compose.material.rememberBackdropScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abrahamlay.movielicious.kmm.core.datacore.usecase.DataResult
 import com.abrahamlay.movielicious.kmm.movie.domain.model.Movie
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.abrahamlay.movielicious.kmm.home.HomeContract
 import org.abrahamlay.movielicious.kmm.home.HomeViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.util.Collections
@@ -32,7 +33,21 @@ import java.util.Collections
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun HomeComponent() {
+fun HomeComponent(
+    viewModel: HomeViewModel = koinViewModel(),
+    onNavigateToDetail: (Int) -> Unit = {}
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is HomeContract.Effect.NavigateToDetail -> onNavigateToDetail(effect.movieId)
+                is HomeContract.Effect.ShowError -> {}
+            }
+        }
+    }
+
     BackdropScaffold(
         modifier = Modifier.fillMaxSize(),
         frontLayerScrimColor = Color.Transparent,
@@ -41,10 +56,22 @@ fun HomeComponent() {
             Toolbar(Modifier) { showMenu() }
         },
         frontLayerContent = {
-            Section(uiAction = HomeViewModel.UiAction.POPULAR)
+            Section(
+                title = "Popular Movies",
+                moviesResult = state.popularMovies,
+                onMovieClicked = { movie ->
+                    viewModel.setIntent(HomeContract.Intent.MovieClicked(movie))
+                }
+            )
         },
         backLayerContent = {
-            Section(uiAction = HomeViewModel.UiAction.NOW_PLAYING)
+            Section(
+                title = "Now Playing",
+                moviesResult = state.nowPlayingMovies,
+                onMovieClicked = { movie ->
+                    viewModel.setIntent(HomeContract.Intent.MovieClicked(movie))
+                }
+            )
         },
         snackbarHost = {
             SnackbarHost(it)
@@ -52,57 +79,65 @@ fun HomeComponent() {
     )
 }
 
-private fun showMenu() {
-
-}
+private fun showMenu() {}
 
 @Composable
 private fun Section(
-    viewModel: HomeViewModel = koinViewModel(),
-    uiAction: HomeViewModel.UiAction = HomeViewModel.UiAction.POPULAR
+    title: String,
+    moviesResult: DataResult<List<Movie>>,
+    onMovieClicked: (Movie) -> Unit
 ) {
-    LaunchedEffect(viewModel) {
-        when (uiAction) {
-            HomeViewModel.UiAction.POPULAR -> viewModel.fetchPopularMovies()
-            HomeViewModel.UiAction.NOW_PLAYING -> viewModel.fetchNowPlayingMovies()
-            HomeViewModel.UiAction.TOP_RATED -> viewModel.fetchTopRatedMovies()
-        }
-
-    }
-    val result by when (uiAction) {
-        HomeViewModel.UiAction.POPULAR -> viewModel.popularMovies.collectAsState()
-        HomeViewModel.UiAction.NOW_PLAYING -> viewModel.nowPlayingMovies.collectAsState()
-        HomeViewModel.UiAction.TOP_RATED -> viewModel.topRatedMovies.collectAsState()
-    }
-
-    when (result) {
-        is DataResult.Success -> {
-            ItemSection((result as DataResult.Success<List<Movie>>).result)
-        }
-
-        else -> Unit
-    }
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-@Composable
-private fun ItemSection(result: List<Movie>?) {
     Column(
-        Modifier.padding(start = 0.dp, top = 8.dp, end = 0.dp, bottom = 8.dp)
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 0.dp, top = 8.dp, end = 0.dp, bottom = 8.dp)
     ) {
         Text(
             modifier = Modifier.padding(16.dp),
-            text = "Popular Movies",
+            text = title,
             style = MaterialTheme.typography.h5
         )
-        LazyRow() {
-            val movies = result ?: Collections.emptyList()
-            items(movies) { movie ->
-                CardHorizontal(movie)
+        when (moviesResult) {
+            is DataResult.Success -> {
+                ItemSection(
+                    movies = moviesResult.result,
+                    onMovieClicked = onMovieClicked
+                )
+            }
+            is DataResult.Loading -> {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = "Loading..."
+                )
+            }
+            is DataResult.Failure -> {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = "Error: ${moviesResult.message}",
+                    color = MaterialTheme.colors.error
+                )
             }
         }
     }
+}
 
+@Composable
+private fun ItemSection(
+    movies: List<Movie>,
+    onMovieClicked: (Movie) -> Unit
+) {
+    LazyRow(
+        Modifier.height(200.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        val movieList = movies.ifEmpty { Collections.emptyList() }
+        items(movieList) { movie ->
+            CardHorizontal(
+                movie = movie,
+                onMovieClicked = onMovieClicked
+            )
+        }
+    }
 }
 
 @Preview(showSystemUi = true)

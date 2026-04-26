@@ -40,8 +40,10 @@ import java.math.RoundingMode
 
 @ExperimentalCoroutinesApi
 @Composable
-fun CardHorizontal(movieModel: Movie) {
-    val context = LocalContext.current
+fun CardHorizontal(
+    movieModel: Movie,
+    onMovieClicked: (Movie) -> Unit = {}
+) {
     Column(Modifier.padding(8.dp)) {
         Card(
             elevation =  6.dp,
@@ -49,14 +51,8 @@ fun CardHorizontal(movieModel: Movie) {
             modifier = Modifier
                 .padding(8.dp)
                 .heightIn(240.dp, 300.dp)
-                .clickable {
-                    Toast
-                        .makeText(
-                            context, "${movieModel.title}",
-                            Toast.LENGTH_SHORT
-                        )
-                        .show()
-                }) {
+                .clickable { onMovieClicked(movieModel) }
+        ) {
             PosterImage(movieModel)
         }
         Spacer(modifier = Modifier.height(4.dp))

@@ -40,6 +40,7 @@ kotlin {
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.koin.android)
                 implementation(libs.koin.androidx.compose)
+                implementation(libs.lifecycle.runtime.compose)
 //                implementation(libs.androidx.material3.android)
 //                implementation(libs.hilt.android)
             }

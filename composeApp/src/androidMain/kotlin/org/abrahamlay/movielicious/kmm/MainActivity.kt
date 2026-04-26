@@ -1,18 +1,28 @@
 package org.abrahamlay.movielicious.kmm
 
-import org.abrahamlay.movielicious.kmm.component.App
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import org.abrahamlay.movielicious.kmm.component.App
+import org.abrahamlay.movielicious.kmm.theme.MovieliciousTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        enableEdgeToEdge()
         setContent {
-            App()
+            MovieliciousTheme {
+                App()
+            }
         }
     }
 }
@@ -20,5 +30,14 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+    MovieliciousTheme {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+            }
+        }
+    }
 }
