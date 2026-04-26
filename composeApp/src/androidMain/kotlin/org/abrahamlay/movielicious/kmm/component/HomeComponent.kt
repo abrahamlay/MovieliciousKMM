@@ -133,7 +133,7 @@ private fun ItemSection(
         val movieList = movies.ifEmpty { Collections.emptyList() }
         items(movieList) { movie ->
             CardHorizontal(
-                movie = movie,
+                movieModel = movie,
                 onMovieClicked = onMovieClicked
             )
         }

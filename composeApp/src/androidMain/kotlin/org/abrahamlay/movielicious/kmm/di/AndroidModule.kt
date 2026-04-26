@@ -34,7 +34,7 @@ val androidModule = module {
     }
     single { DriverFactory(androidContext()) }
     single { createDatabase(get()) }
-    single { get<AppDatabase>().movieQueries() }
+    single { get<AppDatabase>().movieQueries }
     single<MovieLocalDataSource> { MovieLocalDataSourceImpl(get()) }
     single { MovieRepositoryImpl(get(), get()) as MovieRepository }
     single { GetPopularCollection(get()) }

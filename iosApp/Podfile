@@ -1,6 +1,6 @@
 platform :ios, '14.1'
 
-target 'MovieliciousKMM' do
+target 'iosApp' do
   use_frameworks!
 
   # Tambahkan ini:
