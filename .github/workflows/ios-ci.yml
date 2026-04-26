@@ -43,6 +43,7 @@ jobs:
 
       - name: Build iOS Project
         run: |
+          ./gradlew :shared:generateDummyFramework
           cd iosApp
           gem list cocoapods -i || sudo gem install cocoapods
           pod install
@@ -79,6 +80,7 @@ jobs:
 
       - name: Run iOS tests
         run: |
+          ./gradlew :shared:generateDummyFramework
           cd iosApp
           gem list cocoapods -i || sudo gem install cocoapods
           pod install
