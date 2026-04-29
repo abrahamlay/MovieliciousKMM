@@ -4,7 +4,7 @@ target 'iosApp' do
   use_frameworks!
 
   # Tambahkan ini:
-  pod 'Shared', :path => '../shared'
+  pod 'shared', :path => '../shared'
 
   # Pod lain yang kamu pakai
   pod 'Alamofire'
