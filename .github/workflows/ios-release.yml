@@ -82,7 +82,7 @@ jobs:
         env:
           CODE_SIGN_STYLE: Manual
           CODE_SIGNING_REQUIRED: YES
-          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_ALLOWED: YES
           DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           cd iosApp
@@ -90,9 +90,10 @@ jobs:
           xcodebuild -workspace iosApp.xcworkspace \
             -scheme iosApp \
             -configuration ${{ inputs.configuration }} \
+            -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -archivePath build/iosApp.xcarchive \
-            build \
+            archive \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }}
 
