@@ -91,7 +91,7 @@ jobs:
             -scheme iosApp \
             -configuration ${{ inputs.configuration }} \
             -destination 'generic/platform=iOS' \
-            -archivePath iosApp.xcarchive \
+            -archivePath build/iosApp.xcarchive \
             build \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }}

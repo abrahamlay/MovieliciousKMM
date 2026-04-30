@@ -47,7 +47,7 @@ jobs:
           cd iosApp
           gem list cocoapods -i || sudo gem install cocoapods
           pod install
-          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' build CODE_SIGNING_ALLOWED=NO
+          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16' build CODE_SIGNING_ALLOWED=NO
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -84,4 +84,4 @@ jobs:
           cd iosApp
           gem list cocoapods -i || sudo gem install cocoapods
           pod install
-          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' test CODE_SIGNING_ALLOWED=NO
+          xcodebuild -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16' test CODE_SIGNING_ALLOWED=NO
