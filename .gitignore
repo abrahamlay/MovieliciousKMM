@@ -1,4 +1,6 @@
 *.iml
+.env
+opencode.db
 .kotlin
 .gradle
 **/build/
