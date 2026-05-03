@@ -1,32 +1,21 @@
 platform :ios, '14.1'
-
-target 'iosApp' do
 install! 'cocoapods', :share_schemes_for_development_pods => false
 
 target 'iosApp' do
   use_frameworks!
 
-  # Tambahkan ini:
-  pod 'shared', :path => '../shared'
   pod 'Shared', :path => '../shared'
 
   pod 'Alamofire'
   pod 'Kingfisher'
-end
-
 
   post_install do |installer|
-    # Fix deployment target for all pods (silences Xcode 16+ warnings)
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.1'
       end
     end
 
-    # Fix the "[CP-User] Build shared" script phase:
-    # 1. Set JAVA_HOME for Gradle
-    # 2. Pass enableIos=true so iOS framework tasks exist
-    # 3. Set GRADLE_OPTS for memory
     shared_target = installer.pods_project.targets.find { |t| t.name == 'shared' }
     if shared_target
       shared_target.build_phases.each do |phase|
@@ -35,7 +24,7 @@ end
             export JAVA_HOME=${JAVA_HOME:-$(/usr/libexec/java_home 2>/dev/null || echo "/Library/Java/JavaVirtualMachines/current/Contents/Home")}
             export GRADLE_OPTS="-Xmx4096M -Dfile.encoding=UTF-8"
             cd "$SRCROOT/.."
-            "./gradlew" :shared:embedAndSignAppleFrameworkForXcode -PenableIos=true
+            "./gradlew" :shared:embedAndSignAppleFrameworkForXcode
           SCRIPT
         end
       end
