@@ -48,6 +48,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.OffsetEffect
+import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
@@ -164,30 +166,61 @@ private fun ShowcaseSection(result: List<Movie>?) {
     Box {
 
         val pagerState = rememberPagerState(
-            initialPage = 4,
-            initialPageOffsetFraction = 0.3f,
             pageCount = { result?.size ?: 0 })
-        val totalScrollProgress = pagerState.currentPage + pagerState.currentPageOffsetFraction
-
-        Box(
+        val verticalGradient = Brush.verticalGradient(
+            startY = 2f,
+            colors = listOf(Color.Transparent, Color.White)
+        )
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(800.dp, 900.dp)
-                .graphicsLayer {
-//                    val scrollAmount = totalScrollProgress * size.width
-//                    translationX = -scrollAmount
-                },
-        ) {
-            val verticalGradient = Brush.verticalGradient(
-                startY = 2f,
-                colors = listOf(Color.Transparent, Color.White)
-            )
-            BackdropImage(result?.get(pagerState.currentPage))
+                .fillMaxSize(),
+            // PENTING: Matikan scroll manual, biarkan state yang mengontrol
+            userScrollEnabled = false,
+            pageSpacing = 0.dp,
+            contentPadding = PaddingValues(0.dp)
+        ) { page ->
+
             Box(
-                Modifier
+                modifier = Modifier
                     .fillMaxSize()
-                    .background(brush = verticalGradient)
-            )
+                    .graphicsLayer {
+                        // Dapatkan progres scroll total
+                        val totalScrollProgress =
+                            pagerState.currentPage +
+                                    pagerState.currentPageOffsetFraction
+                        val pageOffset =
+                            (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                        // Faktor kecepatan parallax (0.5f = 50% kecepatan)
+                        val parallaxFactor = 0.5f
+
+                        // Hitung pergeseran
+                        val scrollAmount = pageOffset * size.width * parallaxFactor
+
+                        // Kita perlu offset awal agar background di page 4 mulai dari 0
+                        val initialOffset = pagerState.currentPage * size.width * parallaxFactor
+
+                        // Terapkan translasi POSITIF untuk bergerak BERLAWANAN ARAH
+                        // (scrollAmount - initialOffset)
+                        translationX = scrollAmount - initialOffset
+//                        Toast.makeText(context, "Swipe ${scrollAmount - initialOffset}", Toast.LENGTH_SHORT).show()
+                    }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text(text = "Current Page: ${pagerState.currentPage}")
+                    Text(text = "Target Page: ${pagerState.targetPage}")
+                    Text(text = "Settled Page Offset: ${pagerState.settledPage}")
+                }
+                BackdropImage(result?.get(pagerState.currentPage))
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(brush = verticalGradient)
+                )
+            }
         }
         HorizontalPager(
             state = pagerState,
@@ -208,8 +241,8 @@ private fun ShowcaseSection(result: List<Movie>?) {
             )
 
             val translation = lerp(
-                start = 0.75f, // Mengecil hingga 75%
-                stop = 1f,     // Ukuran penuh
+                start = 1f,
+                stop = 0f,
                 fraction = 1f - pageOffset.absoluteValue.coerceIn(0f, 1f)
             )
 
