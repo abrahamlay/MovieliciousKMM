@@ -18,26 +18,21 @@ sqldelight {
     }
 }
 
-val enableIos = project.properties["enableIos"]?.toString()?.toBoolean() ?: false
-
-
 kotlin {
     jvmToolchain(17)
     androidTarget()
-//    if (enableIos) {
-        val xcf = XCFramework()
-        listOf(
-            iosX64(),
-            iosArm64(),
-            iosSimulatorArm64()
-        ).forEach { iosTarget ->
-            iosTarget.binaries.framework {
-                baseName = "Shared"
-                freeCompilerArgs += "-Xbinary=bundleId=org.abrahamlay.movielicious.kmm"
-                xcf.add(this)
-            }
+    val xcf = XCFramework()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "Shared"
+            freeCompilerArgs += "-Xbinary=bundleId=org.abrahamlay.movielicious.kmm"
+            xcf.add(this)
         }
-//    }
+    }
 
 
     sourceSets {
@@ -49,6 +44,7 @@ kotlin {
                 api(libs.ktor.client.logging)
                 api(libs.ktor.client.content.negotiation)
                 api(libs.ktor.serialization.kotlinx.json)
+                api(libs.sqldelight.runtime)
 
                 // those below plugin dependencies also support Kotlin Multiplatform.
                 api(libs.landscapist.placeholder)
@@ -84,42 +80,38 @@ kotlin {
             }
         }
 
-//        if(enableIos) {
-            val iosX64Main by getting
-            val iosArm64Main by getting
-            val iosMain by creating {
-                dependsOn(commonMain)
-                iosX64Main.dependsOn(this)
-                iosArm64Main.dependsOn(this)
-                dependencies {
-                    implementation(libs.ktor.client.darwin)
-                    implementation(libs.sqldelight.native.driver)
-                }
+        val iosX64Main by getting
+        val iosArm64Main by getting
+        val iosMain by creating {
+            dependsOn(commonMain)
+            iosX64Main.dependsOn(this)
+            iosArm64Main.dependsOn(this)
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+                implementation(libs.sqldelight.native.driver)
             }
-            val iosTest by creating {
-                dependsOn(commonTest)
-            }
+        }
+        val iosTest by creating {
+            dependsOn(commonTest)
+        }
 
 
-            val iosSimulatorArm64Main by sourceSets.getting
-            val iosSimulatorArm64Test by sourceSets.getting
+        val iosSimulatorArm64Main by sourceSets.getting
+        val iosSimulatorArm64Test by sourceSets.getting
 
-            iosSimulatorArm64Main.dependsOn(iosMain)
-            iosSimulatorArm64Test.dependsOn(iosTest)
-//        }
+        iosSimulatorArm64Main.dependsOn(iosMain)
+        iosSimulatorArm64Test.dependsOn(iosTest)
 
     }
-//    if(enableIos) {
-        cocoapods {
-            summary = "Data Domain Movielicious App"
-            homepage = "Link to the Shared Module homepage"
-            ios.deploymentTarget = "14.1"
-            framework {
-                baseName = "Shared"
-            }
-            version = "1.0.0"
+    cocoapods {
+        summary = "Data Domain Movielicious App"
+        homepage = "Link to the Shared Module homepage"
+        ios.deploymentTarget = "14.1"
+        framework {
+            baseName = "Shared"
         }
-//    }
+        version = "1.0.0"
+    }
 }
 
 android {
