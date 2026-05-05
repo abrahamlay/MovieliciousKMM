@@ -6,12 +6,25 @@ on:
   pull_request:
     branches: [ master ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: "-Xmx4096M -Dfile.encoding=UTF-8"
+
 jobs:
   build:
+    name: KMM Build & Test
     runs-on: macos-latest
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -19,8 +32,41 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew :shared:lintDevelopmentDebug :shared:testDevelopmentDebugUnitTest :composeApp:lintDevelopmentDebug :composeApp:assembleDevelopmentDebug
+      - name: Run detekt
+        run: ./gradlew detekt --parallel --build-cache --no-daemon
+
+      - name: Lint, Test & Build
+        run: >
+          ./gradlew
+          :shared:lintDevelopmentDebug
+          :shared:testDevelopmentDebugUnitTest
+          :composeApp:lintDevelopmentDebug
+          :composeApp:assembleDevelopmentDebug
+          --parallel --build-cache --no-daemon
+
+      - name: Publish Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kmm-test-results
+          path: |
+            shared/build/test-results/testDevelopmentDebugUnitTest/*.xml
+            composeApp/build/test-results/testDevelopmentDebugUnitTest/*.xml
+          retention-days: 7
+
+      - name: Run Kover coverage verification
+        run: ./gradlew :shared:koverXmlReport :shared:koverVerify --parallel --build-cache --no-daemon
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kmm-coverage-report
+          path: shared/build/reports/kover/
+          retention-days: 7
