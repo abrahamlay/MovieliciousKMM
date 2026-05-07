@@ -46,7 +46,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run lint
-        run: ./gradlew :shared:lintDevelopmentDebug :composeApp:lintDevelopmentDebug --parallel --build-cache --no-daemon
+        run: ./gradlew :shared:lintProductionDebug :composeApp:lintProductionDebug --parallel --build-cache --no-daemon
 
   android-build:
     name: Build Android
@@ -66,13 +66,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build Android Debug APK
-        run: ./gradlew :composeApp:assembleDevelopmentDebug --parallel --build-cache --no-daemon
+        run: ./gradlew :composeApp:assembleProductionDebug --parallel --build-cache --no-daemon
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk
-          path: composeApp/build/outputs/apk/development/debug/*.apk
+          path: composeApp/build/outputs/apk/production/debug/*.apk
           retention-days: 7
 
   android-unit-tests:
@@ -93,7 +93,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run unit tests
-        run: ./gradlew :shared:testDevelopmentDebugUnitTest :composeApp:testDevelopmentDebugUnitTest --parallel --build-cache --no-daemon
+        run: ./gradlew :shared:testProductionDebugUnitTest :composeApp:testProductionDebugUnitTest --parallel --build-cache --no-daemon
 
       - name: Publish Test Results
         uses: actions/upload-artifact@v4
@@ -101,8 +101,8 @@ jobs:
         with:
           name: android-test-results
           path: |
-            shared/build/test-results/testDevelopmentDebugUnitTest/*.xml
-            composeApp/build/test-results/testDevelopmentDebugUnitTest/*.xml
+            shared/build/test-results/testProductionDebugUnitTest/*.xml
+            composeApp/build/test-results/testProductionDebugUnitTest/*.xml
           retention-days: 7
 
   android-coverage:
