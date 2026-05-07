@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinKsp)
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
+    alias(libs.plugins.firebaseAppDistribution)
 //    alias(libs.plugins.hiltAndroid)
 }
 
@@ -41,6 +44,9 @@ kotlin {
                 implementation(libs.koin.android)
                 implementation(libs.koin.androidx.compose)
                 implementation(libs.lifecycle.runtime.compose)
+                implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+                implementation(libs.firebase.analytics)
+                implementation(libs.firebase.crashlytics)
 //                implementation(libs.androidx.material3.android)
 //                implementation(libs.hilt.android)
             }
@@ -111,6 +117,21 @@ android {
             dimension = "env"
             applicationId = "org.abrahamlay.movielicious.kmm"
         }
+    }
+
+    // ── Firebase App Distribution ──────────────────────────────────────────
+    // appId, testers, and groups are resolved from environment variables
+    // set by CI. Locally, set FIREBASE_APP_ID before running the task.
+    firebaseAppDistribution {
+        appId = providers.environmentVariable("FIREBASE_APP_ID").orNull
+            ?: project.findProperty("firebaseAppId") as String?
+            ?: ""
+        releaseNotesFile = providers.environmentVariable("FIREBASE_RELEASE_NOTES_FILE").orNull
+            ?: project.findProperty("firebaseReleaseNotesFile") as String?
+        testers = providers.environmentVariable("FIREBASE_TESTERS").orNull
+            ?: project.findProperty("firebaseTesters") as String?
+        groups = providers.environmentVariable("FIREBASE_GROUPS").orNull
+            ?: project.findProperty("firebaseGroups") as String?
     }
 }
 

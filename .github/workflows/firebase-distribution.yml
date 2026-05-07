@@ -1,0 +1,221 @@
+name: Firebase App Distribution
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Build flavor'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      artifact_type:
+        description: 'Artifact type'
+        required: true
+        default: 'apk'
+        type: choice
+        options:
+          - apk
+          - aab
+      release_notes:
+        description: 'Release notes (leave empty to use latest git commit message)'
+        required: false
+        type: string
+      tester_groups:
+        description: 'Firebase tester groups (comma-separated, e.g. qa-team,internal)'
+        required: false
+        default: 'qa-team'
+        type: string
+      testers:
+        description: 'Individual tester emails (comma-separated)'
+        required: false
+        type: string
+
+  workflow_call:
+    inputs:
+      flavor:
+        description: 'Build flavor'
+        required: true
+        type: string
+      artifact_type:
+        description: 'Artifact type'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes'
+        required: false
+        type: string
+      tester_groups:
+        description: 'Firebase tester groups'
+        required: false
+        type: string
+      testers:
+        description: 'Individual tester emails'
+        required: false
+        type: string
+
+env:
+  GRADLE_OPTS: "-Xmx4096M -Dfile.encoding=UTF-8"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  distribute:
+    name: Build & Distribute to Firebase
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.flavor }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # ── Resolve release notes ─────────────────────────────────────────────
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          if [ -n "${{ inputs.release_notes }}" ]; then
+            echo "Using provided release notes"
+            echo "${{ inputs.release_notes }}" > release-notes.txt
+          else
+            echo "Using latest git commit message"
+            git log -1 --pretty=%B > release-notes.txt
+          fi
+          echo "=== Release Notes ==="
+          cat release-notes.txt
+
+      # ── Resolve Firebase App ID per flavor ────────────────────────────────
+      - name: Set Firebase App ID
+        id: firebase-config
+        run: |
+          case "${{ inputs.flavor }}" in
+            development)
+              APP_ID="${{ secrets.FIREBASE_APP_ID_DEVELOPMENT }}"
+              ;;
+            staging)
+              APP_ID="${{ secrets.FIREBASE_APP_ID_STAGING }}"
+              ;;
+            production)
+              APP_ID="${{ secrets.FIREBASE_APP_ID_PRODUCTION }}"
+              ;;
+          esac
+
+          if [ -z "$APP_ID" ]; then
+            echo "::error::FIREBASE_APP_ID_${{ inputs.flavor | upper }} secret is not set"
+            exit 1
+          fi
+
+          echo "app_id=$APP_ID" >> $GITHUB_OUTPUT
+
+      # ── Build APK ─────────────────────────────────────────────────────────
+      - name: Build APK
+        if: inputs.artifact_type == 'apk'
+        env:
+          FIREBASE_APP_ID: ${{ steps.firebase-config.outputs.app_id }}
+        run: |
+          ./gradlew :composeApp:assemble${{ inputs.flavor }}Release \
+            --parallel --build-cache --no-daemon
+
+      # ── Build AAB ─────────────────────────────────────────────────────────
+      - name: Build AAB
+        if: inputs.artifact_type == 'aab'
+        env:
+          FIREBASE_APP_ID: ${{ steps.firebase-config.outputs.app_id }}
+        run: |
+          ./gradlew :composeApp:bundle${{ inputs.flavor }}Release \
+            --parallel --build-cache --no-daemon
+
+      # ── Upload artifact for inspection ────────────────────────────────────
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: inputs.artifact_type == 'apk'
+        with:
+          name: ${{ inputs.flavor }}-release-${{ inputs.artifact_type }}
+          path: composeApp/build/outputs/apk/${{ inputs.flavor }}/release/*.apk
+          retention-days: 14
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        if: inputs.artifact_type == 'aab'
+        with:
+          name: ${{ inputs.flavor }}-release-${{ inputs.artifact_type }}
+          path: composeApp/build/outputs/bundle/${{ inputs.flavor }}Release/*.aab
+          retention-days: 14
+
+      # ── Firebase App Distribution (APK) ───────────────────────────────────
+      - name: Upload APK to Firebase App Distribution
+        if: inputs.artifact_type == 'apk'
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_APP_ID: ${{ steps.firebase-config.outputs.app_id }}
+          FIREBASE_GROUPS: ${{ inputs.tester_groups }}
+          FIREBASE_TESTERS: ${{ inputs.testers }}
+        run: |
+          # Install Firebase CLI
+          curl -sL https://firebase.tools | bash
+
+          # Determine artifact path
+          APK_FILE=$(find composeApp/build/outputs/apk/${{ inputs.flavor }}/release -name "*.apk" | head -1)
+
+          if [ -z "$APK_FILE" ]; then
+            echo "::error::No APK found in composeApp/build/outputs/apk/${{ inputs.flavor }}/release/"
+            exit 1
+          fi
+
+          echo "Uploading $APK_FILE to Firebase App Distribution..."
+
+          firebase appdistribution:distribute "$APK_FILE" \
+            --app "$FIREBASE_APP_ID" \
+            --token "$FIREBASE_TOKEN" \
+            --release-notes-file release-notes.txt \
+            --groups "$FIREBASE_GROUPS" \
+            $([ -n "$FIREBASE_TESTERS" ] && echo "--testers $FIREBASE_TESTERS" || true)
+
+      # ── Firebase App Distribution (AAB) ───────────────────────────────────
+      - name: Upload AAB to Firebase App Distribution
+        if: inputs.artifact_type == 'aab'
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_APP_ID: ${{ steps.firebase-config.outputs.app_id }}
+          FIREBASE_GROUPS: ${{ inputs.tester_groups }}
+          FIREBASE_TESTERS: ${{ inputs.testers }}
+        run: |
+          # Install Firebase CLI
+          curl -sL https://firebase.tools | bash
+
+          # Determine artifact path
+          AAB_FILE=$(find composeApp/build/outputs/bundle/${{ inputs.flavor }}Release -name "*.aab" | head -1)
+
+          if [ -z "$AAB_FILE" ]; then
+            echo "::error::No AAB found in composeApp/build/outputs/bundle/${{ inputs.flavor }}Release/"
+            exit 1
+          fi
+
+          echo "Uploading $AAB_FILE to Firebase App Distribution..."
+
+          firebase appdistribution:distribute "$AAB_FILE" \
+            --app "$FIREBASE_APP_ID" \
+            --token "$FIREBASE_TOKEN" \
+            --release-notes-file release-notes.txt \
+            --groups "$FIREBASE_GROUPS" \
+            $([ -n "$FIREBASE_TESTERS" ] && echo "--testers $FIREBASE_TESTERS" || true)
+
+      - name: Distribution complete
+        run: |
+          echo "✅ Successfully distributed ${{ inputs.flavor }} ${{ inputs.artifact_type }} to Firebase App Distribution"
+          echo "   Tester groups: ${{ inputs.tester_groups }}"
+          $([ -n "${{ inputs.testers }}" ] && echo "   Testers: ${{ inputs.testers }}" || true)
