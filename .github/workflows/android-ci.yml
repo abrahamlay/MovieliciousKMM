@@ -19,6 +19,7 @@ on:
       - 'settings.gradle.kts'
       - 'gradle.properties'
       - '.github/workflows/android-ci.yml'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -162,10 +163,7 @@ jobs:
     name: Auto-Distribute to Firebase
     runs-on: ubuntu-latest
     needs: [android-build, android-unit-tests, android-coverage]
-    if: >
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') &&
-      secrets.FIREBASE_TOKEN != ''
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && secrets.FIREBASE_TOKEN != ''
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
