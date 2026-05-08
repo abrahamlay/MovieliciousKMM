@@ -115,7 +115,8 @@ jobs:
           esac
 
           if [ -z "$APP_ID" ]; then
-            echo "::error::FIREBASE_APP_ID_${{ inputs.flavor | upper }} secret is not set"
+            FLAVOR_UPPER=$(echo "${{ inputs.flavor }}" | tr '[:lower:]' '[:upper:]')
+            echo "::error::FIREBASE_APP_ID_${FLAVOR_UPPER} secret is not set"
             exit 1
           fi
 
